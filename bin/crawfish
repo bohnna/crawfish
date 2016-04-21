@@ -1,0 +1,12 @@
+#!/usr/bin/env node
+
+var argv = require('yargs').argv,
+    crawfish = require('../lib/crawfish');
+
+if (argv._[0]) {
+  crawfish.crawl(argv._[0], null, function(err, leftPages) {
+    process.stdout.write(JSON.stringify(leftPages, null, 2));
+  });
+} else {
+  console.log('I can\'t crawl anything');
+}
