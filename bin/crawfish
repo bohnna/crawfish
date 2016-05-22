@@ -1,12 +1,52 @@
 #!/usr/bin/env node
 
-var argv = require('yargs').argv,
-    crawfish = require('../lib/crawfish');
 
-if (argv._[0]) {
-  crawfish.crawl(argv._[0], null, function(err, leftPages) {
-    process.stdout.write(JSON.stringify(leftPages, null, 2));
+var argv = require('yargs')
+  .usage('Usage: \n -c Return CSV \n -v Verbose \n -s Take screenshots \n -r Return referrers \n -l Return links')
+  .boolean(['c', 'v', 's', 'r', 'l'])
+  .demand(1)
+  .argv,
+    urlRegex = require('url-regex'),
+    crawfish = require('../lib/crawfish'),
+    fs = require('fs');
+
+// Check for http or https, if not, prepend http to it.
+var cleanUrl = function(url) {
+  if (argv._[0].indexOf('http://') == 0 || argv._[0].indexOf('https://') == 0) {
+    return argv._[0];
+  } else {
+    console.log('\n' + 'WARNING: No protocol detected. Defaulting URL to http://');
+    return 'http://' + argv._[0];
+  }
+}
+
+if (argv.file) {
+  // Create a -404 filename for returned 404 links.
+  var fileName          = argv.file,
+      notFoundFileName  = fileName.substring(0, fileName.lastIndexOf(".")) 
+        + '-404' + fileName.substring(fileName.lastIndexOf("."));
+}
+
+if (argv._[0] && urlRegex().test(cleanUrl(argv._[0]))) {
+  crawfish.crawl(argv._[0], argv, function(err, results, notfound) {
+    // This is performed once the crawfish is done.
+    // arg 1: value to turn into json.
+    // arg 2: null - outputs everything
+    // arg 3: Uses 2 whitespaces to output strings.
+    if (fileName) {
+      fs.writeFile(fileName, JSON.stringify(results, null, 2), function(err) {
+        if (err) return console.log(err);
+        console.log('Wrote results to ' + fileName);
+      });
+
+      fs.writeFile(notFoundFileName, JSON.stringify(notfound, null, 2), function(err) {
+        if (err) return console.log(err);
+        console.log('Wrote 404 results to ' + notFoundFileName);
+      });
+    } else {
+      process.stdout.write('\n\n' + JSON.stringify(results, null, 2));
+    }
   });
 } else {
-  console.log('I can\'t crawl anything');
+  console.error('FAILED: Not a valid URL. I can\'t crawl anything, fam.');
 }

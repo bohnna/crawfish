@@ -28,5 +28,8 @@
   },
   "bin": {
     "crawfish": "./bin/crawfish"
+  },
+  "dependencies": {
+    "url-regex": "^3.1.1"
   }
 }
